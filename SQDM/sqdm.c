@@ -3,8 +3,8 @@ Felipe Brun Vergani
 Algoritmo que executa a soma das diferenças dos quadrados de 2 matrizes A e B. (SQDM)
 
 		gcc -fopenmp sqdm.c -o sqdm.x -lm 
-		./sqdm.x 5 > tabela.csv     
-		executavel (n_de_threads)(largura_da_matriz) > nome.csv
+		executavel (n_de_threads)(largura_da_matriz)
+		atualização do csv automatico --> tail -f [nome do arquivo]
 */
 
 #include <stdio.h>
@@ -18,7 +18,8 @@ void printALL(double **a, int largura);
 int main(int argc, char *argv[]){
 	
 	FILE *opn;
-	opn = fopen("tabela.csv", "a+");
+	
+	opn = fopen("tabela16.csv", "a+");
 	
     int numThreads;
 	
@@ -36,13 +37,10 @@ int main(int argc, char *argv[]){
 	
 	
 	
-	
 	if(opn == NULL){
-		printf("Erro na abertura do arquivo");
+		printf("\nErro na abertura do arquivo\n\n");
 		return 1;
-	}
-	
-	
+	}	
 	//NUMEROS DE THREAD
 	omp_set_num_threads(numThreads);
    //printf("Threads = %d\n", numThreads );
@@ -74,7 +72,7 @@ int main(int argc, char *argv[]){
 	
 	//TEMPO DE ALOCACAO
 	run_timeALOC = omp_get_wtime() - start_time;
-   // printf("Tempo de alocação: %.20lf s\n", run_timeALOC);
+   	fprintf(opn,"%.20lf \t", run_timeALOC);
 	start_time = omp_get_wtime();
 	
   
@@ -96,10 +94,11 @@ int main(int argc, char *argv[]){
 	}
 	
 	run_timeINIC = omp_get_wtime() - start_time;
-    //printf("Tempo de inicialização: %.20lf s\n", run_timeINIC);
+    fprintf(opn,"%.20lf\t", run_timeINIC);
 
     start_time = omp_get_wtime();
 	
+	//printf("inicialização das matrizes\n");
 	//printALL(mA, largura);
 	//printALL(mB, largura);
 	
@@ -111,6 +110,9 @@ int main(int argc, char *argv[]){
 			mB[i][j] = pow(mB[i][j], quadrado);
 		}
 	}
+	//printf("pow das matrizes\n");
+	//printALL(mA, largura);
+	//printALL(mB, largura);
 	
 	
 	//(X = A^2 - B^2);
@@ -123,6 +125,7 @@ int main(int argc, char *argv[]){
 	
 	
 	//Somar todos valores da matriz X
+	#pragma omp parallel for private(j) shared(mX, i)
 	for(i = 0; i < largura; i++){
 		for(j = 0; j < largura; j++){
 			Resultado += mX[i][j];
@@ -131,8 +134,9 @@ int main(int argc, char *argv[]){
 	
 	
 	run_timePROCESS = omp_get_wtime() - start_time;
-    //printf("Tempo de processamento: %.20lf s\n", run_timePROCESS);
+    fprintf(opn, "%.20lf\t", run_timePROCESS);
 
+	//printf("Apos as operações\n");
 	//printALL(mA, largura);
 	//printALL(mB, largura);
 	//printALL(mX, largura);
@@ -141,7 +145,7 @@ int main(int argc, char *argv[]){
 	
 	//printf("\nResultado: %lf\n", Resultado);
 	//printf("Tempo\n");
-	fprintf(opn,"%.20lf\n", run_timeALOC+run_timeINIC+run_timePROCESS);
+	fprintf(opn,"%.20lf\t\n", run_timeALOC+run_timeINIC+run_timePROCESS);
 	fclose(opn);
 	return 0;
 }
@@ -150,7 +154,7 @@ void printALL(double **a, int largura){
     int i, j;
     for(i = 0; i < largura; i++){
         for(j = 0; j < largura; j++){
-			printf("%lf; ;", a[i][j]);
+			printf("%lf;", a[i][j]);
 		}
 		printf("\n");
     }	
